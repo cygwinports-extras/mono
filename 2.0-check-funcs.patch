@@ -1,0 +1,183 @@
+--- origsrc/mono-2.0/configure.in	2008-09-02 10:42:56.000000000 -0500
++++ src/mono-2.0/configure.in	2008-10-06 02:45:16.607978800 -0500
+@@ -1457,6 +1462,11 @@
+ 	AC_CHECK_FUNCS(stime)
+ 	AC_CHECK_FUNCS(strerror_r)
+ 	AC_CHECK_FUNCS(ttyname_r)
++	AC_CHECK_FUNCS(confstr)
++	AC_CHECK_FUNCS(lockf)
++	AC_CHECK_FUNCS(mincore)
++	AC_CHECK_FUNCS(psignal)
++	AC_CHECK_FUNCS(sethostname)
+ 	AC_CHECK_SIZEOF(size_t)
+ 	AC_CHECK_TYPES([blksize_t], [AC_DEFINE(HAVE_BLKSIZE_T)], , 
+ 		[#include <sys/types.h>
+--- origsrc/mono-2.0/mono/io-layer/collection.c	2008-07-01 12:50:32.000000000 -0500
++++ src/mono-2.0/mono/io-layer/collection.c	2008-10-06 02:45:16.639228000 -0500
+@@ -62,7 +62,7 @@
+ 	g_assert (ret == 0);
+ 	
+ #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
+-#if defined(__FreeBSD__) || defined(__NetBSD__)
++#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__CYGWIN__)
+ 	ret = pthread_attr_setstacksize (&attr, 65536);
+ #else
+ 	ret = pthread_attr_setstacksize (&attr, PTHREAD_STACK_MIN);
+--- origsrc/mono-2.0/mono/io-layer/wapi_glob.c	2008-09-02 10:42:41.000000000 -0500
++++ src/mono-2.0/mono/io-layer/wapi_glob.c	2008-10-06 02:45:16.654852600 -0500
+@@ -41,6 +41,7 @@
+  */
+ #include <sys/param.h>
+ #include <sys/stat.h>
++#include <sys/syslimits.h>
+ 
+ #include <glib.h>
+ #include <ctype.h>
+--- origsrc/mono-2.0/mono/metadata/rawbuffer.c	2008-09-02 10:42:41.000000000 -0500
++++ src/mono-2.0/mono/metadata/rawbuffer.c	2008-10-06 02:45:16.654852600 -0500
+@@ -165,6 +165,7 @@
+ 	if (ptr == (void *) -1)
+ 		return 0;
+ 
++#ifndef __CYGWIN__
+ 	/* 
+ 	 * This seems to prevent segmentation faults on Fedora Linux, no
+ 	 * idea why :). See
+@@ -172,6 +173,7 @@
+ 	 * for more info.
+ 	 */
+ 	mprotect (ptr, end - start, prot | PROT_EXEC);
++#endif
+ 
+ 	if (make_unreadable) {
+ 		int res = mprotect (ptr, end - start, 0);
+--- origsrc/mono-2.0/mono/utils/mono-mmap.c	2008-07-01 12:50:50.000000000 -0500
++++ src/mono-2.0/mono/utils/mono-mmap.c	2008-10-06 02:45:16.764224800 -0500
+@@ -309,9 +309,13 @@
+ 			memset (addr, 0, length);
+ #else
+ 		memset (addr, 0, length);
++#ifdef MADV_DONTNEED
+ 		madvise (addr, length, MADV_DONTNEED);
++#endif
++#ifdef MADV_FREE
+ 		madvise (addr, length, MADV_FREE);
+ #endif
++#endif
+ 	}
+ 	return mprotect (addr, length, prot);
+ }
+--- origsrc/mono-2.0/mono/utils/mono-path.c	2008-09-02 10:42:54.000000000 -0500
++++ src/mono-2.0/mono/utils/mono-path.c	2008-10-06 02:45:16.779849400 -0500
+@@ -21,6 +21,10 @@
+ #include <sys/param.h>
+ #endif
+ 
++#ifndef MAXSYMLINKS
++#define MAXSYMLINKS 32
++#endif
++
+ #include "mono-path.h"
+ 
+ /* Resolves '..' and '.' references in a path. If the path provided is relative,
+--- origsrc/mono-2.0/support/serial.c	2008-09-02 10:42:56.000000000 -0500
++++ src/mono-2.0/support/serial.c	2008-10-06 02:45:16.795474000 -0500
+@@ -25,6 +25,13 @@
+ #include <sys/time.h>
+ #endif
+ 
++#if defined(__CYGWIN__)
++#include <sys/time.h>
++#include <termios.h>
++#define FIONREAD	TIOCINQ
++#define TIOCOUTQ	0x5411
++#endif
++
+ /* This is a copy of System.IO.Ports.Handshake */
+ typedef enum {
+ 	NoneHandshake = 0,
+--- origsrc/mono-2.0/support/signal.c	2008-07-01 12:51:14.000000000 -0500
++++ src/mono-2.0/support/signal.c	2008-10-06 02:45:16.811098600 -0500
+@@ -72,6 +72,7 @@
+ 	#define mph_int_set(p,o,n) do { *(p) = n; } while (0)
+ #endif
+ 
++#ifdef HAVE_PSIGNAL
+ int
+ Mono_Posix_Syscall_psignal (int sig, const char* s)
+ {
+@@ -79,6 +80,7 @@
+ 	psignal (sig, s);
+ 	return errno == 0 ? 0 : -1;
+ }
++#endif
+ 
+ #define NUM_SIGNALS 64
+ static signal_info signals[NUM_SIGNALS];
+--- origsrc/mono-2.0/support/sys-mman.c	2008-07-01 12:51:14.000000000 -0500
++++ src/mono-2.0/support/sys-mman.c	2008-10-06 02:45:16.811098600 -0500
+@@ -101,6 +101,7 @@
+ }
+ #endif /* def HAVE_MREMAP */
+ 
++#ifdef HAVE_MINCORE
+ int
+ Mono_Posix_Syscall_mincore (void *start, mph_size_t length, unsigned char *vec)
+ {
+@@ -108,6 +109,7 @@
+ 
+ 	return mincore (start, (size_t) length, vec);
+ }
++#endif /* def HAVE_MINCORE */
+ 
+ #ifdef HAVE_POSIX_MADVISE
+ gint32
+--- origsrc/mono-2.0/support/unistd.c	2008-07-01 12:51:14.000000000 -0500
++++ src/mono-2.0/support/unistd.c	2008-10-06 02:45:16.826723200 -0500
+@@ -116,6 +116,7 @@
+ 	return sysconf (name);
+ }
+ 
++#ifdef HAVE_CONFSTR
+ mph_size_t
+ Mono_Posix_Syscall_confstr (int name, char *buf, mph_size_t len)
+ {
+@@ -124,6 +125,7 @@
+ 		return -1;
+ 	return confstr (name, buf, (size_t) len);
+ }
++#endif /* def HAVE_CONFSTR */
+ 
+ #ifdef HAVE_TTYNAME_R
+ gint32
+@@ -159,12 +161,14 @@
+ 	return gethostname (buf, (size_t) len);
+ }
+ 
++#ifdef HAVE_SETHOSTNAME
+ gint32
+ Mono_Posix_Syscall_sethostname (const char *name, mph_size_t len)
+ {
+ 	mph_return_if_size_t_overflow (len);
+ 	return sethostname (name, (size_t) len);
+ }
++#endif /* def HAVE_SETHOSTNAME */
+ 
+ gint64
+ Mono_Posix_Syscall_gethostid (void)
+@@ -218,6 +222,7 @@
+ 	return ftruncate (fd, (off_t) length);
+ }
+ 
++#ifdef HAVE_LOCKF
+ gint32
+ Mono_Posix_Syscall_lockf (int fd, int cmd, mph_off_t len)
+ {
+@@ -226,6 +231,7 @@
+ 		return -1;
+ 	return lockf (fd, cmd, (off_t) len);
+ }
++#endif /* def HAVE_LOCKF */
+ 
+ int
+ Mono_Posix_Syscall_swab (void *from, void *to, mph_ssize_t n)

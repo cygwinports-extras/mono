@@ -1,0 +1,40 @@
+<configuration>
+	<dllmap dll="i:kernel32.dll">
+		<dllentry dll="__Internal" name="CopyMemory" target="mono_win32_compat_CopyMemory" />
+		<dllentry dll="__Internal" name="FillMemory" target="mono_win32_compat_FillMemory" />
+		<dllentry dll="__Internal" name="MoveMemory" target="mono_win32_compat_MoveMemory" />
+		<dllentry dll="__Internal" name="ZeroMemory" target="mono_win32_compat_ZeroMemory" />
+	</dllmap>
+	<dllmap dll="i:libxslt.dll"           target="cygxslt-1.dll" />
+	<dllmap dll="i:msvcrt"                target="cygwin1.dll" />
+	<dllmap dll="i:msvcrt.dll"            target="cygwin1.dll" />
+	<dllmap dll="MonoPosixHelper"         target="cygMonoPosixHelper.dll" />
+	<dllmap dll="gdiplus.dll"             target="cyggdiplus.dll" />
+	<dllmap dll="intl"                    target="cygintl-8.dll" />
+	<dllmap dll="libX11"                  target="cygX11-6.dll" />
+	<dllmap dll="libc"                    target="cygwin1.dll" />
+	<dllmap dll="libcairo-2.dll"          target="cygcairo-2.dll" />
+	<dllmap dll="libfam.so.0"             target="cygfam-0.dll" />
+	<dllmap dll="libgamin-1.so.0"         target="cyggamin-1-0.dll" />
+	<dllmap dll="libglib-2.0-0.dll"       target="cygglib-2.0-0.dll" />
+	<dllmap dll="libglib-2.0.so"          target="cygglib-2.0-0.dll" />
+	<dllmap dll="libglib-2.0.so.0"        target="cygglib-2.0-0.dll" />
+	<dllmap dll="libgobject-2.0-0.dll"    target="cyggobject-2.0-0.dll" />
+	<dllmap dll="libgobject-2.0.so"       target="cyggobject-2.0-0.dll" />
+	<dllmap dll="libgobject-2.0.so.0"     target="cyggobject-2.0-0.dll" />
+	<dllmap dll="libgdk_pixbuf-2.0-0.dll" target="cyggdk_pixbuf-2.0-0.dll" />
+	<dllmap dll="libgdk_pixbuf-2.0.so"    target="cyggdk_pixbuf-2.0-0.dll" />
+	<dllmap dll="libgdk_pixbuf-2.0.so.0"  target="cyggdk_pixbuf-2.0-0.dll" />
+	<dllmap dll="libgdk-x11-2.0-0.dll"    target="cyggdk-x11-2.0-0.dll" />
+	<dllmap dll="libgdk-x11-2.0.so"       target="cyggdk-x11-2.0-0.dll" />
+	<dllmap dll="libgdk-x11-2.0.so.0"     target="cyggdk-x11-2.0-0.dll" />
+	<dllmap dll="libgtk-x11-2.0-0.dll"    target="cyggtk-x11-2.0-0.dll" />
+	<dllmap dll="libgtk-x11-2.0.so"       target="cyggtk-x11-2.0-0.dll" />
+	<dllmap dll="libgtk-x11-2.0.so.0"     target="cyggtk-x11-2.0-0.dll" />
+	<dllmap dll="libgnomeui-2.so.0"       target="cyggnomeui-2-0.dll" />
+	<dllmap dll="librsvg-2.so.2"          target="cygrsvg-2-2.dll" />
+	<dllmap dll="libintl"                 target="cygintl-8.dll" />
+	<dllmap dll="libmySQL.dll"            target="cygmysqlclient-15.dll" />
+	<dllmap dll="sqlite"                  target="cygsqlite-0.dll" />
+	<dllmap dll="sqlite3"                 target="cygsqlite3-0.dll" />
+</configuration>

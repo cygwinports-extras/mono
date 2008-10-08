@@ -1,0 +1,76 @@
+--- origsrc/mono-2.0/ikvm-native/Makefile.am	2008-07-01 12:50:06.000000000 -0500
++++ src/mono-2.0/ikvm-native/Makefile.am	2008-10-06 02:45:16.623603400 -0500
+@@ -5,5 +5,5 @@
+ 
+ libikvm_native_la_SOURCES = jni.c os.c jni.h
+ 
+-libikvm_native_la_LDFLAGS = -avoid-version
++libikvm_native_la_LDFLAGS = -avoid-version -no-undefined
+ libikvm_native_la_LIBADD = $(GMODULE_LIBS)
+--- origsrc/mono-2.0/mono/interpreter/Makefile.am	2008-07-01 12:50:57.000000000 -0500
++++ src/mono-2.0/mono/interpreter/Makefile.am	2008-10-06 02:45:16.623603400 -0500
+@@ -43,6 +43,7 @@
+ libgc_libs=$(LIBGC_LIBS)
+ endif
+ 
++libmint_la_LDFLAGS = -no-undefined
+ libmint_la_LIBADD =				\
+ 	../arch/libmonoarch.la		\
+ 	../metadata/libmonoruntime.la	\
+--- origsrc/mono-2.0/mono/mini/Makefile.am	2008-09-02 10:42:54.000000000 -0500
++++ src/mono-2.0/mono/mini/Makefile.am	2008-10-06 02:45:16.670477200 -0500
+@@ -60,7 +60,7 @@
+ if PLATFORM_WIN32
+ libmono_la_LDFLAGS=-no-undefined -avoid-version -Wl,--kill-at $(monoldflags)
+ else
+-libmono_la_LDFLAGS=$(monoldflags)
++libmono_la_LDFLAGS=-no-undefined $(monoldflags)
+ endif
+ 
+ if JIT_SUPPORTED
+--- origsrc/mono-2.0/mono/profiler/Makefile.am	2008-09-02 10:42:42.000000000 -0500
++++ src/mono-2.0/mono/profiler/Makefile.am	2008-10-06 02:45:16.701726400 -0500
+@@ -17,9 +17,12 @@
+ endif
+ 
+ libmono_profiler_cov_la_SOURCES = mono-cov.c
++libmono_profiler_cov_la_LDFLAGS = -avoid-version -no-undefined
+ libmono_profiler_cov_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
+ libmono_profiler_aot_la_SOURCES = mono-profiler-aot.c
++libmono_profiler_aot_la_LDFLAGS = -avoid-version -no-undefined
+ libmono_profiler_aot_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
+ libmono_profiler_logging_la_SOURCES = mono-profiler-logging.c
++libmono_profiler_logging_la_LDFLAGS = -avoid-version -no-undefined
+ libmono_profiler_logging_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
+ 
+--- origsrc/mono-2.0/mono/tests/Makefile.am	2008-09-25 12:46:58.000000000 -0500
++++ src/mono-2.0/mono/tests/Makefile.am	2008-10-06 02:45:16.701726400 -0500
+@@ -767,7 +767,7 @@
+ # can't find them. So we use --kill-at to remove the @ suffix as well.
+ libtest_la_LDFLAGS=-no-undefined -rpath `pwd` -Wl,--kill-at
+ else
+-libtest_la_LDFLAGS = -rpath `pwd`
++libtest_la_LDFLAGS = -rpath `pwd` -no-undefined
+ endif
+ libtest_la_SOURCES = libtest.c
+ libtest_la_LIBADD = $(glib_libs)
+--- origsrc/mono-2.0/samples/size/Makefile	2008-10-01 16:08:40.000000000 -0500
++++ src/mono-2.0/samples/size/Makefile	2008-10-06 02:45:16.779849400 -0500
+@@ -1,5 +1,5 @@
+ 
+-all: objectinspector.dll libmono-profiler-size.so sample.exe
++all: objectinspector.dll cygmono-profiler-size.dll sample.exe
+ 	LD_LIBRARY_PATH=. mono --profile=size sample.exe
+ 
+ sample.exe: objectinspector.dll sample.cs
+@@ -8,5 +8,8 @@
+ objectinspector.dll: objectinspector.cs
+ 	mcs -target:library objectinspector.cs
+ 
+-libmono-profiler-size.so: size.c
+-	gcc -Wall -g -shared -o libmono-profiler-size.so size.c `pkg-config --cflags --libs mono`
++cygmono-profiler-size.dll: size.c
++	gcc -Wall -g -shared -o cygmono-profiler-size.dll size.c `pkg-config --cflags --libs mono`
++
++clean:
++	rm -f *.dll *.so *.exe

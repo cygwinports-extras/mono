@@ -1,0 +1,61 @@
+inherit mono
+
+DESCRIPTION="Mono C-Sharp runtime"
+
+PATCH_URI="
+	mirror://portage/dev-lang/${PN}/files/${PN}-biginteger_overflow.diff
+	2.0-no-mingw.patch
+	2.0-check-funcs.patch
+	2.0-no-undefined.patch
+	2.0-visibility.patch
+"
+
+DIFF_EXCLUDES="mcs"
+
+src_compile() {
+	cd ${S}
+	cygautoreconf
+
+	# force bootstrap; will not build with system mono, even same version
+	mkdir -p ${S}/mcs/build/deps
+	touch ${S}/mcs/build/deps/use-monolite
+
+	cd ${B}
+	cygconf --disable-static --with-preview --with-moonlight
+	cygmake -j1 EXTERNAL_MCS=false EXTERNAL_MONO=false PLATFORM=linux
+}
+
+src_test() {
+	mkdir -p "${T}/home/mono"
+
+	export HOME="${T}/home/mono"
+	export XDG_CONFIG_HOME="${T}/home/mono"
+	export XDG_DATA_HOME="${T}/home/mono"
+
+	cd ${B}
+	cygcheck
+}
+
+src_install() {
+	cd ${B}
+	cyginstall -j1 PLATFORM=linux
+
+	insinto /etc/mono
+	newins ${C}/etc-mono-config config
+
+	sed -i -e 's!shouldnotlink=no!shouldnotlink=yes!' ${D}/usr/lib/*.la
+	sed -i -e 's!shouldnotlink=yes!shouldnotlink=no!' ${D}/usr/lib/libmono.la
+
+	# FIXME: AOT not working yet
+#	export MONO_PATH=${D}/usr/lib/mono/1.0
+#	for dll in ${D}/usr/lib/mono/1.0/mscorlib.dll \
+#	           $(find ${D}/usr/lib/mono/1.0/ -name '*.dll' -o -name '*.exe')
+#	do
+#		if ${D}/usr/bin/mono --aot -O=all --config ${D}/etc/mono/config ${dll} &> /dev/null
+#		then
+#			inform "AOT compiling ${dll#${D}}: Success"
+#		else
+#			warning "AOT compiling ${dll#${D}}: ERROR"
+#		fi
+#	done
+}
