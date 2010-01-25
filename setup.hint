@@ -1,6 +1,6 @@
-category: Interpreters Dotnet
-requires: crypt glib2 libX11_6 libcairo2 libgc1 libgdiplus libintl8 libmysqlclient15 libsqlite0 libsqlite3_0 libxslt zlib
-sdesc: "Open source .NET platform"
+category: Interpreters DotNET
+requires: libcairo2 libgamin1_0 libgcc1 libgdiplus libglib2.0_0 libintl8 libX11_6 libXcursor1 zlib0
+sdesc: ".NET platform implementation"
 ldesc: "The Mono Project is an open development initiative sponsored by
 Novell to develop an open source, UNIX version of the Microsoft .NET
 development platform. Its objective is to enable UNIX developers to

@@ -1,0 +1,200 @@
+--- origsrc/mono-2.4.2.3/mono/mini/aot-compiler.c	2009-07-15 13:50:01.000000000 -0500
++++ src/mono-2.4.2.3/mono/mini/aot-compiler.c	2009-12-04 01:46:27.365856600 -0600
+@@ -67,7 +67,7 @@
+ #include <mono/utils/mono-compiler.h>
+ #include <mono/utils/mono-time.h>
+ 
+-#ifndef PLATFORM_WIN32
++#if !defined(PLATFORM_WIN32) && !defined(__CYGWIN__)
+ #include <mono/utils/freebsd-elf32.h>
+ #include <mono/utils/freebsd-elf64.h>
+ #endif
+@@ -82,7 +82,7 @@
+ #define TV_GETTIME(tv) tv = mono_100ns_ticks ()
+ #define TV_ELAPSED(start,end) (((end) - (start)) / 10)
+ 
+-#ifdef PLATFORM_WIN32
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ #define SHARED_EXT ".dll"
+ #elif defined(__ppc__) && defined(__MACH__)
+ #define SHARED_EXT ".dylib"
+@@ -131,12 +131,12 @@ typedef struct MonoAotStats {
+ 	int jit_time, gen_time, link_time;
+ } MonoAotStats;
+ 
+-#if defined(TARGET_AMD64) && !defined(PLATFORM_WIN32)
++#if defined(TARGET_AMD64) && !defined(PLATFORM_WIN32) && !defined(__CYGWIN__)
+ #define USE_ELF_WRITER 1
+ #define USE_ELF_RELA 1
+ #endif
+ 
+-#if defined(TARGET_X86) && !defined(PLATFORM_WIN32)
++#if defined(TARGET_X86) && !defined(PLATFORM_WIN32) && !defined(__CYGWIN__)
+ #define USE_ELF_WRITER 1
+ #endif
+ 
+@@ -1511,7 +1511,7 @@ static void
+ asm_writer_emit_section_change (MonoAotCompile *acfg, const char *section_name, int subsection_index)
+ {
+ 	asm_writer_emit_unset_mode (acfg);
+-#if defined(PLATFORM_WIN32)
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ 	fprintf (acfg->fp, ".section %s\n", section_name);
+ #elif defined(__MACH__)
+ 	if (strcmp(section_name, ".bss") == 0)
+@@ -1546,7 +1546,7 @@ asm_writer_emit_symbol_type (MonoAotComp
+ 
+ #elif defined(sparc) || defined(TARGET_ARM)
+ 	fprintf (acfg->fp, "\t.type %s,#%s\n", name, stype);
+-#elif defined(PLATFORM_WIN32)
++#elif defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ 
+ #elif defined(TARGET_AMD64) || defined(TARGET_X86)
+ 	fprintf (acfg->fp, "\t.type %s,@%s\n", name, stype);
+@@ -1559,7 +1559,7 @@ static void
+ asm_writer_emit_global_inner (MonoAotCompile *acfg, const char *name, gboolean func)
+ {
+ 	asm_writer_emit_unset_mode (acfg);
+-#if  (defined(__ppc__) && defined(__MACH__)) || defined(PLATFORM_WIN32)
++#if  (defined(__ppc__) && defined(__MACH__)) || defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+     // mach-o always uses a '_' prefix.
+ 	fprintf (acfg->fp, "\t.globl _%s\n", name);
+ #else
+@@ -1583,14 +1583,14 @@ static void
+ asm_writer_emit_label (MonoAotCompile *acfg, const char *name)
+ {
+ 	asm_writer_emit_unset_mode (acfg);
+-#if (defined(__ppc__) && defined(__MACH__)) || defined(PLATFORM_WIN32)
++#if (defined(__ppc__) && defined(__MACH__)) || defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+     // mach-o always uses a '_' prefix.
+ 	fprintf (acfg->fp, "_%s:\n", name);
+ #else
+ 	fprintf (acfg->fp, "%s:\n", name);
+ #endif
+ 
+-#if defined(PLATFORM_WIN32)
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ 	/* Emit a normal label too */
+ 	fprintf (acfg->fp, "%s:\n", name);
+ #endif
+@@ -1798,6 +1798,8 @@ asm_writer_emit_writeout (MonoAotCompile
+ 	command = g_strdup_printf ("ld -shared -G -o %s %s.o", outfile_name, acfg->tmpfname);
+ #elif defined(__ppc__) && defined(__MACH__)
+ 	command = g_strdup_printf ("gcc -dynamiclib -o %s %s.o", outfile_name, acfg->tmpfname);
++#elif defined(__CYGWIN__)
++	command = g_strdup_printf ("gcc -shared -o %s %s.o", outfile_name, acfg->tmpfname);
+ #elif defined(PLATFORM_WIN32)
+ 	command = g_strdup_printf ("gcc -shared --dll -mno-cygwin -o %s %s.o", outfile_name, acfg->tmpfname);
+ #else
+--- origsrc/mono-2.4.2.3/mono/mini/aot-runtime.c	2009-07-15 13:50:01.000000000 -0500
++++ src/mono-2.4.2.3/mono/mini/aot-runtime.c	2009-12-04 02:26:42.889269800 -0600
+@@ -56,7 +56,7 @@
+ 
+ #ifndef DISABLE_AOT
+ 
+-#ifdef PLATFORM_WIN32
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ #define SHARED_EXT ".dll"
+ #elif (defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__)) || defined(__MACH__)
+ #define SHARED_EXT ".dylib"
+@@ -623,7 +623,7 @@ G_GNUC_UNUSED
+ static void
+ make_writable (guint8* addr, guint32 len)
+ {
+-#ifndef PLATFORM_WIN32
++#if !defined(PLATFORM_WIN32)
+ 	guint8 *page_start;
+ 	int pages, err;
+ 
+@@ -740,7 +740,7 @@ load_aot_module_from_cache (MonoAssembly
+ 
+ 			res = g_spawn_command_line_sync (cmd, &out, &err, &exit_status, NULL);
+ 
+-#if !defined(PLATFORM_WIN32) && !defined(__ppc__) && !defined(__ppc64__) && !defined(__powerpc__)
++#if !defined(PLATFORM_WIN32) && !defined(__ppc__) && !defined(__ppc64__) && !defined(__powerpc__) && !defined(__CYGWIN__)
+ 			if (res) {
+ 				if (!WIFEXITED (exit_status) && (WEXITSTATUS (exit_status) == 0))
+ 					mono_trace (G_LOG_LEVEL_MESSAGE, MONO_TRACE_AOT, "AOT failed: %s.", err);
+@@ -1006,7 +1006,7 @@ load_aot_module (MonoAssembly *assembly,
+ 	find_symbol (sofile, globals, "plt_end", (gpointer*)&amodule->plt_end);
+ 
+ 	if (make_unreadable) {
+-#ifndef PLATFORM_WIN32
++#if !defined(PLATFORM_WIN32) && !defined(__CYGWIN__)
+ 		guint8 *addr;
+ 		guint8 *page_start;
+ 		int pages, err, len;
+--- origsrc/mono-2.4.2.3/mono/mini/mini-x86.c	2009-07-15 13:50:01.000000000 -0500
++++ src/mono-2.4.2.3/mono/mini/mini-x86.c	2009-12-04 02:08:09.313926700 -0600
+@@ -40,7 +40,7 @@ static gboolean optimize_for_xen = TRUE;
+ #define optimize_for_xen 0
+ #endif
+ 
+-#ifdef PLATFORM_WIN32
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ static gboolean is_win32 = TRUE;
+ #else
+ static gboolean is_win32 = FALSE;
+@@ -171,7 +171,7 @@ typedef struct {
+ 
+ static X86_Reg_No param_regs [] = { 0 };
+ 
+-#if defined(PLATFORM_WIN32) || defined(__APPLE__) || defined(__FreeBSD__)
++#if defined(PLATFORM_WIN32) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__CYGWIN__)
+ #define SMALL_STRUCTS_IN_REGS
+ static X86_Reg_No return_regs [] = { X86_EAX, X86_EDX };
+ #endif
+@@ -1686,7 +1686,7 @@ mono_emit_stack_alloc (guchar *code, Mon
+ 	int sreg = tree->sreg1;
+ 	int need_touch = FALSE;
+ 
+-#if defined(PLATFORM_WIN32) || defined(MONO_ARCH_SIGSEGV_ON_ALTSTACK)
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__) || defined(MONO_ARCH_SIGSEGV_ON_ALTSTACK)
+ 	need_touch = TRUE;
+ #endif
+ 
+@@ -1832,7 +1832,7 @@ emit_move_return_value (MonoCompile *cfg
+ guint8*
+ mono_x86_emit_tls_get (guint8* code, int dreg, int tls_offset)
+ {
+-#ifdef PLATFORM_WIN32
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ 	/* 
+ 	 * See the Under the Hood article in the May 1996 issue of Microsoft Systems 
+ 	 * Journal and/or a disassembly of the TlsGet () function.
+@@ -4252,7 +4252,7 @@ mono_arch_emit_prolog (MonoCompile *cfg)
+ 			code = emit_call (cfg, code, MONO_PATCH_INFO_INTERNAL_METHOD, (gpointer)"mono_jit_thread_attach");
+ 			x86_alu_reg_imm (code, X86_ADD, X86_ESP, 4);
+ 			x86_patch (buf, code);
+-#ifdef PLATFORM_WIN32
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ 			/* The TLS key actually contains a pointer to the MonoJitTlsData structure */
+ 			/* FIXME: Add a separate key for LMF to avoid this */
+ 			x86_alu_reg_imm (code, X86_ADD, X86_EAX, G_STRUCT_OFFSET (MonoJitTlsData, lmf));
+@@ -4304,7 +4304,7 @@ mono_arch_emit_prolog (MonoCompile *cfg)
+ 			if (lmf_addr_tls_offset != -1) {
+ 				/* Load lmf quicky using the GS register */
+ 				code = mono_x86_emit_tls_get (code, X86_EAX, lmf_addr_tls_offset);
+-#ifdef PLATFORM_WIN32
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ 				/* The TLS key actually contains a pointer to the MonoJitTlsData structure */
+ 				/* FIXME: Add a separate key for LMF to avoid this */
+ 				x86_alu_reg_imm (code, X86_ADD, X86_EAX, G_STRUCT_OFFSET (MonoJitTlsData, lmf));
+@@ -4352,7 +4352,7 @@ mono_arch_emit_prolog (MonoCompile *cfg)
+ 
+ 	if (alloc_size) {
+ 		/* See mono_emit_stack_alloc */
+-#if defined(PLATFORM_WIN32) || defined(MONO_ARCH_SIGSEGV_ON_ALTSTACK)
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__) || defined(MONO_ARCH_SIGSEGV_ON_ALTSTACK)
+ 		guint32 remaining_size = alloc_size;
+ 		while (remaining_size >= 0x1000) {
+ 			x86_alu_reg_imm (code, X86_SUB, X86_ESP, 0x1000);
+@@ -4734,7 +4734,7 @@ mono_arch_setup_jit_tls_data (MonoJitTls
+ {
+ 	if (!tls_offset_inited) {
+ 		if (!getenv ("MONO_NO_TLS")) {
+-#ifdef PLATFORM_WIN32
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ 			/* 
+ 			 * We need to init this multiple times, since when we are first called, the key might not
+ 			 * be initialized yet.

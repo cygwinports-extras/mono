@@ -1,0 +1,12 @@
+--- origsrc/mono-2.4.2/acinclude.m4	2009-06-25 23:20:24.000000000 -0500
++++ src/mono-2.4.2/acinclude.m4	2009-07-05 13:47:00.730713800 -0500
+@@ -29,6 +29,9 @@ i?86-*-linux*|x86_64-*-linux*|powerpc-*-
+ i?86-apple-darwin*)
+     pic_options='-fno-common'
+     ;;
++*-*-cygwin*)
++    pic_options='-DDLL_EXPORT'
++    ;;
+ *)
+     dolt_supported=no
+     ;;

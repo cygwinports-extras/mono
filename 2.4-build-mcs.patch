@@ -1,0 +1,20 @@
+These are quite large, causing OOM errors every time. (Possibly due to
+lack of GC??)
+
+--- origsrc/mono-2.4.2.3/mcs/docs/Makefile	2009-07-15 13:50:13.000000000 -0500
++++ src/mono-2.4.2.3/mcs/docs/Makefile	2009-12-06 19:57:28.492916100 -0600
+@@ -16,14 +16,12 @@
+ DOC_SOURCE_FILES = \
+ 	lang-csharp.source          \
+ 	Mono.source                 \
+-	netdocs.source              \
+ 	Novell.source
+ 
+ ASSEMBLED_DOCS = \
+ 	cs-errors.tree cs-errors.zip      \
+ 	ecma334.tree ecma334.zip          \
+ 	Mono.tree Mono.zip                \
+-	netdocs.tree netdocs.zip          \
+ 	Novell.tree Novell.zip            
+ 
+ MONODOC_SOURCES_INSTALL_FILES = \

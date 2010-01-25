@@ -1,0 +1,98 @@
+mirror_dpt_mono="http://patch-tracker.debian.org/patch/series/dl/mono/2.4.3+dfsg-1"
+
+inherit mono
+
+DESCRIPTION="Mono C-Sharp runtime"
+
+SRC_URI+=" etc-mono-config"
+PATCH_URI="
+	mirror://dpt_mono/console-no-utf8-bom
+	mirror://dpt_mono/firebird-fbclient
+	mirror://dpt_mono/fix_BigInteger_overflow_CVE-2007-5197
+	mirror://dpt_mono/fix_implicit_pointer_conversions
+	mirror://dpt_mono/fix_array_compare
+	mirror://dpt_mono/fix_NetworkInterface_endless_loop
+	mirror://dpt_mono/fix_mono-api-info_build
+	mirror://dpt_mono/fix_csharplib_build
+	mirror://dpt_mono/fix_mdoc_build
+	mirror://dpt_mono/fix_tuner_build
+	mirror://dpt_mono/fix_CreateDelegate_ArgumentException
+	mirror://dpt_mono/fix_large_ranges_in_random_generator_r146995
+	mirror://dpt_mono/build_cecil_as_2.0
+	mirror://dpt_mono/build_firebirdsql_as_2.0
+	mirror://dpt_mono/build_linker_tuner_cil-strip_as_2.0
+	mirror://dpt_mono/build_permview_as_2.0
+	mirror://dpt_mono/build_genxs_2.0
+	2.4-cygwin.patch
+	2.0-check-funcs.patch
+	2.0-no-undefined.patch
+	2.0-visibility.patch
+	2.4-dolt.patch
+	2.4-libtool22.patch
+	2.4-build-mcs.patch
+"
+
+DIFF_EXCLUDES="mcs *.css *.html"
+
+# mono can't take anything too fancy, but does need the latter
+CFLAGS="-O2 -pipe -fno-strict-aliasing"
+CPPFLAGS+=" -I/usr/include/ncurses"
+MAKEOPTS+=" -j1"
+
+src_compile() {
+	cd ${S}
+	cygautoreconf
+
+	cd ${B}
+	cygconf \
+		--with-gc=none \
+		--with-glib=system \
+		--with-libgdiplus=installed \
+		--with-moonlight=no \
+		--with-static_mono=no \
+		--with-tls=pthread \
+		--with-xen_opt=no
+	cygmake EXTERNAL_MCS=false EXTERNAL_MONO=false PLATFORM=linux
+}
+
+src_test() {
+	mkdir -p "${T}/home/mono"
+
+	export HOME="${T}/home/mono"
+	export XDG_CONFIG_HOME="${T}/home/mono"
+	export XDG_DATA_HOME="${T}/home/mono"
+
+	cd ${B}
+	cygcheck
+}
+
+src_install() {
+	cd ${B}
+	cyginstall PLATFORM=linux
+
+	cygmake -C ${S}/mcs/jay uninstall DESTDIR=${D}
+
+	insinto /etc/mono
+	newins ${S}/etc-mono-config config
+
+	# dllmaps handled in master config
+	rm -f ${D}/usr/lib/mono/2.0/mono-shlib-cop.exe.config
+
+	sed -i -e 's!shouldnotlink=no!shouldnotlink=yes!' ${D}/usr/lib/*.la
+	sed -i -e 's!shouldnotlink=yes!shouldnotlink=no!' ${D}/usr/lib/libmono.la
+
+	dosym mono-nunit.pc /usr/lib/pkgconfig/nunit.pc
+
+	# FIXME: AOT not working yet
+#	export MONO_PATH=${D}/usr/lib/mono/1.0
+#	for dll in ${D}/usr/lib/mono/1.0/mscorlib.dll \
+#	           $(find ${D}/usr/lib/mono/1.0/ -name '*.dll' -o -name '*.exe')
+#	do
+#		if ${D}/usr/bin/mono --aot -O=all --config ${D}/etc/mono/config ${dll} &> /dev/null
+#		then
+#			inform "AOT compiling ${dll#${D}}: Success"
+#		else
+#			warning "AOT compiling ${dll#${D}}: ERROR"
+#		fi
+#	done
+}
