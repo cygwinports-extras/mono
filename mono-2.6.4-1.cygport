@@ -6,30 +6,15 @@ DESCRIPTION="Mono C-Sharp runtime"
 
 SRC_URI+=" etc-mono-config"
 PATCH_URI="
-	mirror://dpt_mono/console-no-utf8-bom
-	mirror://dpt_mono/firebird-fbclient
-	mirror://dpt_mono/fix_BigInteger_overflow_CVE-2007-5197
-	mirror://dpt_mono/fix_implicit_pointer_conversions
-	mirror://dpt_mono/fix_array_compare
-	mirror://dpt_mono/fix_NetworkInterface_endless_loop
-	mirror://dpt_mono/fix_mono-api-info_build
-	mirror://dpt_mono/fix_csharplib_build
-	mirror://dpt_mono/fix_mdoc_build
-	mirror://dpt_mono/fix_tuner_build
-	mirror://dpt_mono/fix_CreateDelegate_ArgumentException
-	mirror://dpt_mono/fix_large_ranges_in_random_generator_r146995
-	mirror://dpt_mono/build_cecil_as_2.0
-	mirror://dpt_mono/build_firebirdsql_as_2.0
-	mirror://dpt_mono/build_linker_tuner_cil-strip_as_2.0
-	mirror://dpt_mono/build_permview_as_2.0
-	mirror://dpt_mono/build_genxs_2.0
-	2.4-cygwin.patch
-	2.0-check-funcs.patch
+	2.6-cygwin.patch
+	2.6-check-funcs.patch
 	2.0-no-undefined.patch
 	2.0-visibility.patch
 	2.4-dolt.patch
 	2.4-libtool22.patch
 	2.4-build-mcs.patch
+	2.6-null_gc-compile.patch
+	2.6-posix_madvise.patch
 "
 
 DIFF_EXCLUDES="mcs *.css *.html"

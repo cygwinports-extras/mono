@@ -1,0 +1,193 @@
+--- origsrc/mono-2.6.4/configure.in	2010-06-28 15:08:35.991650600 -0500
++++ src/mono-2.6.4/configure.in	2010-06-28 16:19:14.994107700 -0500
+@@ -14,12 +14,6 @@ AC_SUBST(API_VER)
+ 
+ AC_PROG_LN_S
+ 
+-# In case of cygwin, override LN_S, irrespective of what it determines.
+-# The build uses cygwin, but the actual runtime doesn't.
+-case $host_os in
+-*cygwin* ) LN_S='cp -p';;
+-esac
+-
+ 
+ dnl
+ dnl libgc checks
+@@ -76,7 +70,18 @@ case "$host" in
+ esac
+ 
+ case "$host" in
+-	*-*-mingw*|*-*-cygwin*)
++	*-*-cygwin*)
++		platform_win32=no
++		CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE -D_REENTRANT -DFD_SETSIZE=1024"
++		libmono_cflags="-D_REENTRANT"
++		libmono_ldflags="-lpthread"
++		libdl=""
++		gc_default=none
++		with_sigaltstack=no
++		with_tls=pthread
++		use_sigposix=yes
++		;;
++	*-*-mingw*)
+ 		platform_win32=yes
+ 		AC_DEFINE(PLATFORM_WIN32,1,[Host Platform is Win32])
+ 		AC_DEFINE(TARGET_WIN32,1,[Target OS is Win32])
+@@ -1768,7 +1777,7 @@ case "{$target}" in
+ 
+ dnl Win32 does not have /dev/random, they have their own method...
+ 
+-    *-*-mingw*|*-*-cygwin*)
++    *-*-mingw*)
+     ac_cv_have_dev_random=no
+     ;;
+ 
+@@ -2225,6 +2234,14 @@ AM_CONDITIONAL(USE_JIT, test x$USEJIT =
+ libsuffix=".so"
+ 
+ case "$host" in
++     *-*-cygwin*)
++	libsuffix=".dll"
++	LIBC="cygwin1.dll"
++	INTL="cygintl-8.dll"
++	SQLITE="cygsqlite-0.dll"
++	SQLITE3="cygsqlite3-0.dll"
++	X11="cygX11-6.dll"
++	;;
+      *-*-darwin*)
+ 	libsuffix=".dylib"
+ 	LIBC="libc.dylib"
+@@ -2579,7 +2596,7 @@ AC_CONFIG_COMMANDS([runtime/etc/mono/4.0
+ ],[LN_S='$LN_S'])
+ 
+ if test x$enable_quiet_build = xyes; then
+-   AC_CONFIG_COMMANDS([quiet], [for i in `find mono libgc support -name Makefile.in | sed -e 's/Makefile.in/Makefile/g'`; do if test -f $i; then $srcdir/scripts/patch-quiet.sh $i; fi; done], [shell=$SHELL])
++   AC_CONFIG_COMMANDS([quiet], [for i in `find mono libgc support -name Makefile`; do if test -f $i; then $srcdir/scripts/patch-quiet.sh $i; fi; done], [shell=$SHELL])
+    AC_CONFIG_COMMANDS([quiet-libtool], [sed -e 's/$echo "copying selected/$show "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool; sed -e 's/$ECHO "copying selected/# "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool])
+ fi
+ 
+--- origsrc/mono-2.6.4/mono/io-layer/collection.c	2010-04-22 10:37:44.000000000 -0500
++++ src/mono-2.6.4/mono/io-layer/collection.c	2010-06-28 15:08:50.043454400 -0500
+@@ -60,7 +60,7 @@ void _wapi_collection_init (void)
+ 
+ #ifdef HAVE_PTHREAD_ATTR_SETSTACKSIZE
+         if (set_stacksize == 0) {
+-#if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
++#if !defined(PTHREAD_STACK_MIN)
+ 			ret = pthread_attr_setstacksize (&attr, 65536);
+ #else
+ 			ret = pthread_attr_setstacksize (&attr, PTHREAD_STACK_MIN);
+--- origsrc/mono-2.6.4/mono/metadata/boehm-gc.c	2010-04-22 10:37:44.000000000 -0500
++++ src/mono-2.6.4/mono/metadata/boehm-gc.c	2010-06-28 15:15:08.006072600 -0500
+@@ -222,7 +222,7 @@ mono_gc_register_thread (void *baseptr)
+ #else
+ 	if (mono_gc_is_gc_thread())
+ 		return TRUE;
+-#if defined(USE_INCLUDED_LIBGC) && !defined(PLATFORM_WIN32)
++#if defined(USE_INCLUDED_LIBGC) && !defined(WIN32_THREADS)
+ 	return GC_thread_register_foreign (baseptr);
+ #else
+ 	return FALSE;
+--- origsrc/mono-2.6.4/mono/metadata/console-unix.c	2010-04-22 10:37:44.000000000 -0500
++++ src/mono-2.6.4/mono/metadata/console-unix.c	2010-06-28 16:00:24.458444800 -0500
+@@ -43,10 +43,12 @@
+ #ifdef HAVE_SYS_FILIO_H
+ #    include <sys/filio.h>
+ #endif
+-#ifndef TIOCGWINSZ
+-#    ifdef HAVE_SYS_IOCTL_H
+-#        include <sys/ioctl.h>
+-#    endif
++#ifdef HAVE_SYS_IOCTL_H
++#    include <sys/ioctl.h>
++#endif
++
++#ifdef __CYGWIN__
++#    include <sys/socket.h>
+ #endif
+ 
+ #include <mono/metadata/console-io.h>
+--- origsrc/mono-2.6.4/mono/metadata/mono-config.c	2010-04-22 10:37:44.000000000 -0500
++++ src/mono-2.6.4/mono/metadata/mono-config.c	2010-06-28 15:16:25.015477300 -0500
+@@ -37,6 +37,8 @@
+ #define CONFIG_OS "aix"
+ #elif defined(__hpux)
+ #define CONFIG_OS "hpux"
++#elif defined(__CYGWIN__)
++#define CONFIG_OS "cygwin"
+ #elif defined(SN_TARGET_PS3)
+ #define CONFIG_OS "CellOS"
+ #else
+--- origsrc/mono-2.6.4/mono/mini/mini-x86.h	2010-04-22 10:37:45.000000000 -0500
++++ src/mono-2.6.4/mono/mini/mini-x86.h	2010-06-28 15:17:52.474479600 -0500
+@@ -3,13 +3,8 @@
+ 
+ #include <mono/arch/x86/x86-codegen.h>
+ #include <mono/utils/mono-sigcontext.h>
+-#ifdef PLATFORM_WIN32
+-#include <windows.h>
+-/* use SIG* defines if possible */
+-#ifdef HAVE_SIGNAL_H
+-#include <signal.h>
+-#endif
+ 
++#if defined(PLATFORM_WIN32) || defined(__CYGWIN__)
+ /* sigcontext surrogate */
+ struct sigcontext {
+ 	unsigned int eax;
+@@ -22,6 +17,14 @@ struct sigcontext {
+ 	unsigned int edi;
+ 	unsigned int eip;
+ };
++#endif
++
++#ifdef PLATFORM_WIN32
++#include <windows.h>
++/* use SIG* defines if possible */
++#ifdef HAVE_SIGNAL_H
++#include <signal.h>
++#endif
+ 
+ typedef void (* MonoW32ExceptionHandler) (int _dummy, EXCEPTION_RECORD *info, void *context);
+ void win32_seh_init(void);
+--- origsrc/mono-2.6.4/mono/utils/mono-dl.c	2010-04-22 10:37:45.000000000 -0500
++++ src/mono-2.6.4/mono/utils/mono-dl.c	2010-06-28 15:18:53.099947200 -0500
+@@ -34,6 +34,11 @@ static const char suffixes [][8] = {
+ static const char suffixes [][1] = {
+ 	""
+ };
++#elif defined(__CYGWIN__)
++#define SOPREFIX "cyg"
++static const char suffixes [][5] = {
++	".dll"
++};
+ #else
+ #define SOPREFIX "lib"
+ static const char suffixes [][4] = {
+--- origsrc/mono-2.6.4/mono/utils/mono-path.c	2010-04-22 10:37:45.000000000 -0500
++++ src/mono-2.6.4/mono/utils/mono-path.c	2010-06-28 15:08:50.053454900 -0500
+@@ -21,6 +21,10 @@
+ #include <sys/param.h>
+ #endif
+ 
++#ifndef MAXSYMLINKS
++#define MAXSYMLINKS 10
++#endif
++
+ #include "mono-path.h"
+ 
+ /* Embedded systems lack MAXSYMLINKS */
+--- origsrc/mono-2.6.4/support/serial.c	2010-04-22 10:37:47.000000000 -0500
++++ src/mono-2.6.4/support/serial.c	2010-06-28 16:30:56.346222800 -0500
+@@ -25,6 +25,11 @@
+ #include <sys/time.h>
+ #endif
+ 
++#ifdef __CYGWIN__
++#define FIONREAD TIOCINQ
++#define TIOCOUTQ -1
++#endif
++
+ /* This is a copy of System.IO.Ports.Handshake */
+ typedef enum {
+ 	NoneHandshake = 0,
