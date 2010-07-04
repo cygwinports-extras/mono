@@ -5,7 +5,7 @@
  libikvm_native_la_SOURCES = jni.c os.c jni.h
  
 -libikvm_native_la_LDFLAGS = -avoid-version
-+libikvm_native_la_LDFLAGS = -avoid-version -no-undefined
++libikvm_native_la_LDFLAGS = -module -avoid-version -no-undefined
  libikvm_native_la_LIBADD = $(GMODULE_LIBS)
 --- origsrc/mono-2.0/mono/interpreter/Makefile.am	2008-07-01 12:50:57.000000000 -0500
 +++ src/mono-2.0/mono/interpreter/Makefile.am	2008-10-06 02:45:16.623603400 -0500
@@ -34,13 +34,13 @@
  endif
  
  libmono_profiler_cov_la_SOURCES = mono-cov.c
-+libmono_profiler_cov_la_LDFLAGS = -avoid-version -no-undefined
++libmono_profiler_cov_la_LDFLAGS = -module -avoid-version -no-undefined
  libmono_profiler_cov_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
  libmono_profiler_aot_la_SOURCES = mono-profiler-aot.c
-+libmono_profiler_aot_la_LDFLAGS = -avoid-version -no-undefined
++libmono_profiler_aot_la_LDFLAGS = -module -avoid-version -no-undefined
  libmono_profiler_aot_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
  libmono_profiler_logging_la_SOURCES = mono-profiler-logging.c
-+libmono_profiler_logging_la_LDFLAGS = -avoid-version -no-undefined
++libmono_profiler_logging_la_LDFLAGS = -module -avoid-version -no-undefined
  libmono_profiler_logging_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
  
 --- origsrc/mono-2.0/mono/tests/Makefile.am	2008-09-25 12:46:58.000000000 -0500
