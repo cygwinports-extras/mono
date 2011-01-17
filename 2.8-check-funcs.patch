@@ -1,0 +1,28 @@
+--- origsrc/mono-2.8.2/configure.in	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/configure.in	2011-01-16 17:27:36.293102300 -0600
+@@ -1673,6 +1680,7 @@ if test x$target_win32 = xno; then
+ 	AC_CHECK_FUNCS(lockf)
+ 	AC_CHECK_FUNCS(swab)
+ 	AC_CHECK_FUNCS(setusershell endusershell)
++	AC_CHECK_FUNCS(mincore)
+ 	AC_CHECK_SIZEOF(size_t)
+ 	AC_CHECK_TYPES([blksize_t], [AC_DEFINE(HAVE_BLKSIZE_T)], , 
+ 		[#include <sys/types.h>
+--- origsrc/mono-2.8.2/support/sys-mman.c	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/support/sys-mman.c	2011-01-16 17:20:13.207530500 -0600
+@@ -101,6 +101,7 @@ Mono_Posix_Syscall_mremap (void *old_add
+ }
+ #endif /* def HAVE_MREMAP */
+ 
++#ifdef HAVE_MINCORE
+ int
+ Mono_Posix_Syscall_mincore (void *start, mph_size_t length, unsigned char *vec)
+ {
+@@ -108,6 +109,7 @@ Mono_Posix_Syscall_mincore (void *start,
+ 
+ 	return mincore (start, (size_t) length, vec);
+ }
++#endif
+ 
+ #ifdef HAVE_POSIX_MADVISE
+ gint32

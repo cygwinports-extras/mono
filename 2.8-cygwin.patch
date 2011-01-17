@@ -1,0 +1,161 @@
+--- origsrc/mono-2.8.2/configure.in	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/configure.in	2011-01-16 17:27:36.293102300 -0600
+@@ -14,12 +14,6 @@ AC_SUBST(API_VER)
+ 
+ AC_PROG_LN_S
+ 
+-# In case of cygwin, override LN_S, irrespective of what it determines.
+-# The build uses cygwin, but the actual runtime doesn't.
+-case $host_os in
+-*cygwin* ) LN_S='cp -p';;
+-esac
+-
+ dnl
+ dnl libgc checks
+ dnl
+@@ -79,7 +73,17 @@ esac
+ host_win32=no
+ target_win32=no
+ case "$host" in
+-	*-mingw*|*-*-cygwin*)
++	*-cygwin*)
++		CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE -D_REENTRANT -DFD_SETSIZE=4096"
++		libmono_cflags="-D_REENTRANT"
++		libdl=""
++		libgc_threads=pthreads
++		gc_default=none
++		with_sigaltstack=no
++		with_tls=pthread
++		use_sigposix=yes
++		;;
++	*-mingw*)
+ 		AC_DEFINE(HOST_WIN32,1,[Host Platform is Win32])
+ 		AC_DEFINE(DISABLE_PORTABILITY,1,[Disable the io-portability layer])
+ 		AC_DEFINE(PLATFORM_NO_SYMLINKS,1,[This platform does not support symlinks])
+@@ -1856,7 +1860,7 @@ case "{$target}" in
+ 
+ dnl Win32 does not have /dev/random, they have their own method...
+ 
+-    *-mingw*|*-*-cygwin*)
++    *-mingw*)
+     ac_cv_have_dev_random=no
+     ;;
+ 
+@@ -2402,6 +2406,14 @@ AM_CONDITIONAL(USE_JIT, test x$USEJIT =
+ libsuffix=".so"
+ 
+ case "$host" in
++     *-*-cygwin*)
++	libsuffix=".dll"
++	LIBC="cygwin1.dll"
++	INTL="cygintl-8.dll"
++	SQLITE="cygsqlite-0.dll"
++	SQLITE3="cygsqlite3-0.dll"
++	X11="cygX11-6.dll"
++	;;
+      *-*-darwin*)
+ 	libsuffix=".dylib"
+ 	LIBC="libc.dylib"
+@@ -2778,7 +2790,7 @@ AC_CONFIG_COMMANDS([runtime/etc/mono/4.0
+ ],[LN_S='$LN_S'])
+ 
+ if test x$enable_quiet_build = xyes; then
+-   AC_CONFIG_COMMANDS([quiet], [for i in `find mono libgc support -name Makefile.in | sed -e 's/Makefile.in/Makefile/g'`; do if test -f $i; then $srcdir/scripts/patch-quiet.sh $i; fi; done], [shell=$SHELL])
++   AC_CONFIG_COMMANDS([quiet], [for i in `find mono libgc support -name Makefile`; do if test -f $i; then $srcdir/scripts/patch-quiet.sh $i; fi; done], [shell=$SHELL])
+    AC_CONFIG_COMMANDS([quiet-libtool], [sed -e 's/$echo "copying selected/$show "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool; sed -e 's/$ECHO "copying selected/# "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool])
+ fi
+ 
+--- origsrc/mono-2.8.2/mono/metadata/boehm-gc.c	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/mono/metadata/boehm-gc.c	2011-01-16 17:27:59.084742000 -0600
+@@ -238,7 +238,7 @@ mono_gc_register_thread (void *baseptr)
+ #else
+ 	if (mono_gc_is_gc_thread())
+ 		return TRUE;
+-#if defined(USE_INCLUDED_LIBGC) && !defined(HOST_WIN32)
++#if defined(USE_INCLUDED_LIBGC) && !defined(WIN32_THREADS)
+ 	return GC_thread_register_foreign (baseptr);
+ #else
+ 	return FALSE;
+--- origsrc/mono-2.8.2/mono/metadata/console-unix.c	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/mono/metadata/console-unix.c	2011-01-16 17:29:07.584461400 -0600
+@@ -49,6 +49,9 @@
+ #ifdef HAVE_SYS_IOCTL_H
+ #    include <sys/ioctl.h>
+ #endif
++#ifdef __CYGWIN__
++#    include <sys/socket.h>
++#endif
+ 
+ #include <mono/metadata/console-io.h>
+ #include <mono/metadata/exception.h>
+--- origsrc/mono-2.8.2/mono/metadata/mono-config.c	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/mono/metadata/mono-config.c	2011-01-16 17:29:55.585745100 -0600
+@@ -41,6 +41,8 @@
+ #define CONFIG_OS "hpux"
+ #elif defined(__HAIKU__)
+ #define CONFIG_OS "haiku"
++#elif defined(__CYGWIN__)
++#define CONFIG_OS "cygwin"
+ #else
+ #warning Unknown operating system
+ #define CONFIG_OS "unknownOS"
+--- origsrc/mono-2.8.2/mono/mini/mini-x86.h	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/mono/mini/mini-x86.h	2011-01-16 17:31:09.106672500 -0600
+@@ -3,13 +3,8 @@
+ 
+ #include <mono/arch/x86/x86-codegen.h>
+ #include <mono/utils/mono-sigcontext.h>
+-#ifdef HOST_WIN32
+-#include <windows.h>
+-/* use SIG* defines if possible */
+-#ifdef HAVE_SIGNAL_H
+-#include <signal.h>
+-#endif
+ 
++#if defined(HOST_WIN32) || defined(__CYGWIN__)
+ /* sigcontext surrogate */
+ struct sigcontext {
+ 	unsigned int eax;
+@@ -22,6 +17,14 @@ struct sigcontext {
+ 	unsigned int edi;
+ 	unsigned int eip;
+ };
++#endif
++
++#ifdef HOST_WIN32
++#include <windows.h>
++/* use SIG* defines if possible */
++#ifdef HAVE_SIGNAL_H
++#include <signal.h>
++#endif
+ 
+ typedef void (* MonoW32ExceptionHandler) (int _dummy, EXCEPTION_RECORD *info, void *context);
+ void win32_seh_init(void);
+--- origsrc/mono-2.8.2/mono/utils/mono-dl.c	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/mono/utils/mono-dl.c	2011-01-16 17:31:57.107956200 -0600
+@@ -29,6 +29,11 @@ static const char suffixes [][8] = {
+ 	".so",
+ 	".bundle"
+ };
++#elif defined(__CYGWIN__)
++#define SOPREFIX "cyg"
++static const char suffixes [][5] = {
++	".dll"
++};
+ #else
+ #define SOPREFIX "lib"
+ static const char suffixes [][4] = {
+--- origsrc/mono-2.8.2/support/serial.c	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/support/serial.c	2011-01-16 17:33:04.312873400 -0600
+@@ -19,6 +19,11 @@
+ 
+ #include <glib.h>
+ 
++#ifdef __CYGWIN__
++#define FIONREAD TIOCINQ
++#define TIOCOUTQ -1
++#endif
++
+ /* This is for FIONREAD on solaris */
+ #if defined(sun)
+ #include <sys/filio.h>

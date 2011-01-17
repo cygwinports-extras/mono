@@ -9,7 +9,7 @@
  libikvm_native_la_LIBADD = $(GMODULE_LIBS)
 --- origsrc/mono-2.0/mono/interpreter/Makefile.am	2008-07-01 12:50:57.000000000 -0500
 +++ src/mono-2.0/mono/interpreter/Makefile.am	2008-10-06 02:45:16.623603400 -0500
-@@ -43,6 +43,7 @@
+@@ -45,6 +45,7 @@
  libgc_libs=$(LIBGC_LIBS)
  endif
  
@@ -17,32 +17,36 @@
  libmint_la_LIBADD =				\
  	../arch/libmonoarch.la		\
  	../metadata/libmonoruntime.la	\
---- origsrc/mono-2.0/mono/mini/Makefile.am	2008-09-02 10:42:54.000000000 -0500
-+++ src/mono-2.0/mono/mini/Makefile.am	2008-10-06 02:45:16.670477200 -0500
-@@ -60,7 +60,7 @@
- if PLATFORM_WIN32
- libmono_la_LDFLAGS=-no-undefined -avoid-version -Wl,--kill-at $(monoldflags)
+--- origsrc/mono-2.8.2/mono/mini/Makefile.am
++++ src/mono-2.8.2/mono/mini/Makefile.am
+@@ -76,7 +76,7 @@
+ if HOST_WIN32
+ libmono_2_0_la_LDFLAGS=-no-undefined -avoid-version -Wl,--kill-at $(monoldflags)
  else
--libmono_la_LDFLAGS=$(monoldflags)
-+libmono_la_LDFLAGS=-no-undefined $(monoldflags)
+-libmono_2_0_la_LDFLAGS=$(monoldflags) -version-info 1:0:0
++libmono_2_0_la_LDFLAGS=$(monoldflags) -no-undefined -version-info 1:0:0
  endif
  
  if JIT_SUPPORTED
---- origsrc/mono-2.0/mono/profiler/Makefile.am	2008-09-02 10:42:42.000000000 -0500
-+++ src/mono-2.0/mono/profiler/Makefile.am	2008-10-06 02:45:16.701726400 -0500
-@@ -17,9 +17,12 @@
+--- origsrc/mono-2.8.2/mono/profiler/Makefile.am
++++ src/mono-2.8.2/mono/profiler/Makefile.am
+@@ -19,10 +19,14 @@
  endif
  
  libmono_profiler_cov_la_SOURCES = mono-cov.c
+-libmono_profiler_cov_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la
 +libmono_profiler_cov_la_LDFLAGS = -module -avoid-version -no-undefined
- libmono_profiler_cov_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
++libmono_profiler_cov_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(GLIB_LIBS)
  libmono_profiler_aot_la_SOURCES = mono-profiler-aot.c
+-libmono_profiler_aot_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la
 +libmono_profiler_aot_la_LDFLAGS = -module -avoid-version -no-undefined
- libmono_profiler_aot_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
++libmono_profiler_aot_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(GLIB_LIBS)
  libmono_profiler_logging_la_SOURCES = mono-profiler-logging.c
 +libmono_profiler_logging_la_LDFLAGS = -module -avoid-version -no-undefined
- libmono_profiler_logging_la_LIBADD = $(top_builddir)/mono/mini/libmono.la
- 
+ libmono_profiler_logging_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(GLIB_LIBS)
+ libmono_profiler_iomap_la_SOURCES = mono-profiler-iomap.c
++libmono_profiler_iomap_la_LDFLAGS = -module -avoid-version -no-undefined
+ libmono_profiler_iomap_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(GLIB_LIBS)
 --- origsrc/mono-2.0/mono/tests/Makefile.am	2008-09-25 12:46:58.000000000 -0500
 +++ src/mono-2.0/mono/tests/Makefile.am	2008-10-06 02:45:16.701726400 -0500
 @@ -767,7 +767,7 @@

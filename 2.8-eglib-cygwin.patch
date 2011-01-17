@@ -1,0 +1,37 @@
+--- origsrc/mono-2.8.2/eglib/configure.ac	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/eglib/configure.ac	2011-01-16 17:40:45.500476800 -0600
+@@ -36,7 +36,7 @@ AM_CONDITIONAL(CROSS_COMPILING, [test x$
+ AC_C_BIGENDIAN([ORDER=G_BIG_ENDIAN],[ORDER=G_LITTLE_ENDIAN])
+ 
+ case $host in
+-*-*-msdos* | *-*-go32* | *-*-mingw32* | *-*-cygwin* | *-*-windows*)
++*-*-msdos* | *-*-go32* | *-*-mingw32* | *-*-windows*)
+     PATHSEP='\\'
+     SEARCHSEP=';'
+     OS="WIN32"
+@@ -170,7 +170,7 @@ AC_SUBST(G_GUINT64_FORMAT)
+ AC_SUBST(G_GINT64_FORMAT)
+ 
+ if test x$enable_quiet_build = xyes; then
+-   AC_CONFIG_COMMANDS([quiet], [for i in `find src test -name Makefile.in | sed -e 's/Makefile.in/Makefile/g'`; do if test -f $i; then $srcdir/../scripts/patch-quiet.sh $i; fi; done], [shell=$SHELL])
++   AC_CONFIG_COMMANDS([quiet], [for i in `find src test -name Makefile`; do if test -f $i; then $srcdir/../scripts/patch-quiet.sh $i; fi; done], [shell=$SHELL])
+    AC_CONFIG_COMMANDS([quiet-libtool], [sed -e 's/$echo "copying selected/$show "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool; sed -e 's/$ECHO "copying selected/# "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool])
+ fi
+ 
+--- origsrc/mono-2.8.2/eglib/src/gmodule-unix.c	2011-01-04 11:39:55.000000000 -0600
++++ src/mono-2.8.2/eglib/src/gmodule-unix.c	2011-01-16 17:59:40.798455400 -0600
+@@ -70,9 +70,14 @@ g_module_build_path (const gchar *direct
+ #ifdef G_OS_UNIX
+ #include <dlfcn.h>
+ 
++#ifdef __CYGWIN__
++#define LIBPREFIX "cyg"
++#define LIBSUFFIX ".dll"
++#else
+ /* For Linux and Solaris, need to add others as we port this */
+ #define LIBPREFIX "lib"
+ #define LIBSUFFIX ".so"
++#endif
+ 
+ struct _GModule {
+ 	void *handle;

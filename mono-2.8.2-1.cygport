@@ -1,20 +1,15 @@
-mirror_dpt_mono="http://patch-tracker.debian.org/patch/series/dl/mono/2.4.3+dfsg-1"
-
 inherit mono
 
 DESCRIPTION="Mono C-Sharp runtime"
 
 SRC_URI+=" etc-mono-config"
 PATCH_URI="
-	2.6-cygwin.patch
-	2.6-check-funcs.patch
-	2.0-no-undefined.patch
-	2.0-visibility.patch
+	2.8-cygwin.patch
+	2.8-check-funcs.patch
+	2.8-no-undefined.patch
 	2.4-dolt.patch
 	2.4-libtool22.patch
-	2.4-build-mcs.patch
-	2.6-null_gc-compile.patch
-	2.6-posix_madvise.patch
+	2.8-eglib-cygwin.patch
 "
 
 DIFF_EXCLUDES="mcs *.css *.html"
@@ -22,7 +17,6 @@ DIFF_EXCLUDES="mcs *.css *.html"
 # mono can't take anything too fancy, but does need the latter
 CFLAGS="-O2 -pipe -fno-strict-aliasing"
 CPPFLAGS+=" -I/usr/include/ncurses"
-MAKEOPTS+=" -j1"
 
 src_compile() {
 	cd ${S}
@@ -31,7 +25,6 @@ src_compile() {
 	cd ${B}
 	cygconf \
 		--with-gc=none \
-		--with-glib=system \
 		--with-libgdiplus=installed \
 		--with-moonlight=no \
 		--with-static_mono=no \
@@ -63,8 +56,7 @@ src_install() {
 	# dllmaps handled in master config
 	rm -f ${D}/usr/lib/mono/2.0/mono-shlib-cop.exe.config
 
-	sed -i -e 's!shouldnotlink=no!shouldnotlink=yes!' ${D}/usr/lib/*.la
-	sed -i -e 's!shouldnotlink=yes!shouldnotlink=no!' ${D}/usr/lib/libmono.la
+	sed -i -e 's!shouldnotlink=no!shouldnotlink=yes!' ${D}/usr/lib/libMono*.la
 
 	dosym mono-nunit.pc /usr/lib/pkgconfig/nunit.pc
 
