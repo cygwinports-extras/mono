@@ -28,9 +28,9 @@
  endif
  
  if JIT_SUPPORTED
---- origsrc/mono-2.8.2/mono/profiler/Makefile.am
-+++ src/mono-2.8.2/mono/profiler/Makefile.am
-@@ -19,10 +19,14 @@
+--- origsrc/mono-2.10.2/mono/profiler/Makefile.am	2011-04-18 06:23:28.000000000 -0500
++++ src/mono-2.10.2/mono/profiler/Makefile.am	2011-05-17 00:42:18.985133200 -0500
+@@ -24,14 +24,19 @@
  endif
  
  libmono_profiler_cov_la_SOURCES = mono-cov.c
@@ -41,12 +41,17 @@
 -libmono_profiler_aot_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la
 +libmono_profiler_aot_la_LDFLAGS = -module -avoid-version -no-undefined
 +libmono_profiler_aot_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(GLIB_LIBS)
- libmono_profiler_logging_la_SOURCES = mono-profiler-logging.c
-+libmono_profiler_logging_la_LDFLAGS = -module -avoid-version -no-undefined
- libmono_profiler_logging_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(GLIB_LIBS)
+ #libmono_profiler_logging_la_SOURCES = mono-profiler-logging.c
++#libmono_profiler_logging_la_LDFLAGS = -module -avoid-version -no-undefined
+ #libmono_profiler_logging_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(GLIB_LIBS)
  libmono_profiler_iomap_la_SOURCES = mono-profiler-iomap.c
 +libmono_profiler_iomap_la_LDFLAGS = -module -avoid-version -no-undefined
  libmono_profiler_iomap_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(GLIB_LIBS)
+ libmono_profiler_log_la_SOURCES = proflog.c
++libmono_profiler_log_la_LDFLAGS = -module -avoid-version -no-undefined
+ libmono_profiler_log_la_LIBADD = $(top_builddir)/mono/mini/libmono-$(API_VER).la $(Z_LIBS)
+ 
+ mprof_report_SOURCES = decode.c
 --- origsrc/mono-2.0/mono/tests/Makefile.am	2008-09-25 12:46:58.000000000 -0500
 +++ src/mono-2.0/mono/tests/Makefile.am	2008-10-06 02:45:16.701726400 -0500
 @@ -767,7 +767,7 @@

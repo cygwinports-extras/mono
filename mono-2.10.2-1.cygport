@@ -4,12 +4,13 @@ DESCRIPTION="Mono C-Sharp runtime"
 
 SRC_URI+=" etc-mono-config"
 PATCH_URI="
-	2.8-cygwin.patch
-	2.8-check-funcs.patch
-	2.8-no-undefined.patch
+	2.10-cygwin.patch
+	2.10-check-funcs.patch
+	2.10-no-undefined.patch
 	2.4-dolt.patch
 	2.4-libtool22.patch
 	2.8-eglib-cygwin.patch
+	2.10-libgc-cygwin.patch
 "
 
 DIFF_EXCLUDES="mcs *.css *.html"
@@ -24,7 +25,7 @@ src_compile() {
 
 	cd ${B}
 	cygconf \
-		--with-gc=none \
+		--with-gc=included \
 		--with-libgdiplus=installed \
 		--with-moonlight=no \
 		--with-static_mono=no \

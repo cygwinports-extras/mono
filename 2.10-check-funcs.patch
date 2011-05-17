@@ -1,3 +1,5 @@
+Cygwin has madvise (which wraps posix_madvise) but no MADV_FREE.
+
 --- origsrc/mono-2.8.2/configure.in	2011-01-04 11:39:55.000000000 -0600
 +++ src/mono-2.8.2/configure.in	2011-01-16 17:27:36.293102300 -0600
 @@ -1673,6 +1680,7 @@ if test x$target_win32 = xno; then
@@ -26,3 +28,14 @@
  
  #ifdef HAVE_POSIX_MADVISE
  gint32
+--- origsrc/mono-2.10.2/mono/utils/mono-mmap.c	2011-04-18 06:23:28.000000000 -0500
++++ src/mono-2.10.2/mono/utils/mono-mmap.c	2011-05-17 01:57:51.743316500 -0500
+@@ -380,7 +380,7 @@ mono_mprotect (void *addr, size_t length
+ 			memset (addr, 0, length);
+ #else
+ 		memset (addr, 0, length);
+-#ifdef HAVE_MADVISE
++#ifndef HAVE_POSIX_MADVISE
+ 		madvise (addr, length, MADV_DONTNEED);
+ 		madvise (addr, length, MADV_FREE);
+ #else

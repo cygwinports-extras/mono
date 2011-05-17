@@ -1,0 +1,22 @@
+--- origsrc/mono-2.10.2/libgc/configure.in	2011-04-18 06:23:28.000000000 -0500
++++ src/mono-2.10.2/libgc/configure.in	2011-05-17 00:54:52.707066800 -0500
+@@ -131,7 +131,7 @@ case "$THREADS" in
+ 	AC_DEFINE(GC_IRIX_THREADS)
+ 	;;
+      *-*-cygwin*)
+-	AC_DEFINE(GC_WIN32_THREADS)
++	AC_DEFINE(GC_LINUX_THREADS)
+ 	;;
+      *-*-darwin*)
+ 	AC_DEFINE(GC_DARWIN_THREADS)
+--- origsrc/mono-2.10.2/libgc/include/private/gcconfig.h	2011-04-18 06:23:28.000000000 -0500
++++ src/mono-2.10.2/libgc/include/private/gcconfig.h	2011-05-17 01:55:06.327307600 -0500
+@@ -2307,7 +2307,7 @@
+ # if defined(GC_IRIX_THREADS) && !defined(IRIX5)
+ 	--> inconsistent configuration
+ # endif
+-# if defined(GC_LINUX_THREADS) && !(defined(LINUX) || defined(NACL))
++# if defined(GC_LINUX_THREADS) && !(defined(LINUX) || defined(NACL) || defined(CYGWIN32))
+ 	--> inconsistent configuration
+ # endif
+ # if defined(GC_SOLARIS_THREADS) && !defined(SUNOS5)

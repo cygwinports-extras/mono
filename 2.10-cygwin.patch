@@ -23,7 +23,7 @@
 +		libmono_cflags="-D_REENTRANT"
 +		libdl=""
 +		libgc_threads=pthreads
-+		gc_default=none
++		gc_default=included
 +		with_sigaltstack=no
 +		with_tls=pthread
 +		use_sigposix=yes
@@ -65,17 +65,6 @@
     AC_CONFIG_COMMANDS([quiet-libtool], [sed -e 's/$echo "copying selected/$show "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool; sed -e 's/$ECHO "copying selected/# "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool])
  fi
  
---- origsrc/mono-2.8.2/mono/metadata/boehm-gc.c	2011-01-04 11:39:55.000000000 -0600
-+++ src/mono-2.8.2/mono/metadata/boehm-gc.c	2011-01-16 17:27:59.084742000 -0600
-@@ -238,7 +238,7 @@ mono_gc_register_thread (void *baseptr)
- #else
- 	if (mono_gc_is_gc_thread())
- 		return TRUE;
--#if defined(USE_INCLUDED_LIBGC) && !defined(HOST_WIN32)
-+#if defined(USE_INCLUDED_LIBGC) && !defined(WIN32_THREADS)
- 	return GC_thread_register_foreign (baseptr);
- #else
- 	return FALSE;
 --- origsrc/mono-2.8.2/mono/metadata/console-unix.c	2011-01-04 11:39:55.000000000 -0600
 +++ src/mono-2.8.2/mono/metadata/console-unix.c	2011-01-16 17:29:07.584461400 -0600
 @@ -49,6 +49,9 @@
@@ -99,12 +88,12 @@
  #else
  #warning Unknown operating system
  #define CONFIG_OS "unknownOS"
---- origsrc/mono-2.8.2/mono/mini/mini-x86.h	2011-01-04 11:39:55.000000000 -0600
-+++ src/mono-2.8.2/mono/mini/mini-x86.h	2011-01-16 17:31:09.106672500 -0600
-@@ -3,13 +3,8 @@
- 
- #include <mono/arch/x86/x86-codegen.h>
- #include <mono/utils/mono-sigcontext.h>
+--- origsrc/mono-2.10.2/mono/mini/mini-x86.h
++++ src/mono-2.10.2/mono/mini/mini-x86.h
+@@ -11,13 +11,8 @@
+ #define kNaClLengthOfCallImm kx86NaClLengthOfCallImm
+ #endif
+
 -#ifdef HOST_WIN32
 -#include <windows.h>
 -/* use SIG* defines if possible */
@@ -116,7 +105,7 @@
  /* sigcontext surrogate */
  struct sigcontext {
  	unsigned int eax;
-@@ -22,6 +17,14 @@ struct sigcontext {
+@@ -30,6 +25,14 @@ struct sigcontext {
  	unsigned int edi;
  	unsigned int eip;
  };
