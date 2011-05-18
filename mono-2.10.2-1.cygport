@@ -31,7 +31,7 @@ src_compile() {
 		--with-static_mono=no \
 		--with-tls=pthread \
 		--with-xen_opt=no
-	cygmake EXTERNAL_MCS=false EXTERNAL_MONO=false PLATFORM=linux
+	cygmake -j1 EXTERNAL_MCS=false EXTERNAL_MONO=false PLATFORM=linux
 }
 
 src_test() {
@@ -47,7 +47,7 @@ src_test() {
 
 src_install() {
 	cd ${B}
-	cyginstall PLATFORM=linux
+	cyginstall -j1 EXTERNAL_MCS=false EXTERNAL_MONO=false PLATFORM=linux
 
 	cygmake -C ${S}/mcs/jay uninstall DESTDIR=${D}
 
