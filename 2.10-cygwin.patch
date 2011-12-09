@@ -13,13 +13,14 @@
  dnl
  dnl libgc checks
  dnl
-@@ -79,7 +73,17 @@ esac
+@@ -79,7 +73,18 @@ esac
  host_win32=no
  target_win32=no
  case "$host" in
 -	*-mingw*|*-*-cygwin*)
 +	*-cygwin*)
 +		CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE -D_REENTRANT -DFD_SETSIZE=4096"
++		AC_DEFINE(PTHREAD_POINTER_ID, 1, [pthread is a pointer])
 +		libmono_cflags="-D_REENTRANT"
 +		libdl=""
 +		libgc_threads=pthreads

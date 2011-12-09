@@ -25,7 +25,7 @@ src_compile() {
 
 	cd ${B}
 	cygconf \
-		--with-gc=included \
+		--with-gc=none \
 		--with-libgdiplus=installed \
 		--with-moonlight=no \
 		--with-static_mono=no \
