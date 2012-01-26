@@ -55,7 +55,10 @@ src_install() {
 	newins ${S}/etc-mono-config config
 
 	# dllmaps handled in master config
-	rm -f ${D}/usr/lib/mono/2.0/mono-shlib-cop.exe.config
+	rm -f ${D}/usr/lib/mono/*/mono-shlib-cop.exe.config
+
+	# for RPM-based systems
+	rm -f ${D}/usr/bin/mono-find-*
 
 	sed -i -e 's!shouldnotlink=no!shouldnotlink=yes!' ${D}/usr/lib/libMono*.la
 
