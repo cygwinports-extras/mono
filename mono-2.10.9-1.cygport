@@ -1,6 +1,11 @@
-inherit mono
+inherit mono python
 
-DESCRIPTION="Mono C-Sharp runtime"
+CATEGORY="Interpreters DotNET"
+SUMMARY="Mono .NET platform implementation"
+DESCRIPTION="The Mono Project is an open development initiative sponsored by
+Novell to develop an open source, UNIX version of the Microsoft .NET
+development platform. Its objective is to enable UNIX developers to build
+and deploy cross-platform .NET Applications."
 
 SRC_URI+=" etc-mono-config"
 PATCH_URI="
@@ -10,10 +15,11 @@ PATCH_URI="
 	2.4-dolt.patch
 	2.4-libtool22.patch
 	2.8-eglib-cygwin.patch
-	2.10-libgc-cygwin.patch
 "
 
-DIFF_EXCLUDES="mcs *.css *.html"
+DIFF_EXCLUDES="mcs docs *.css *.html"
+# DllImport'ed libraries
+REQUIRES="libcairo2 libgamin1_0 libgdiplus libintl8 libX11_6 libXcursor1"
 
 # mono can't take anything too fancy, but does need the latter
 CFLAGS="-O2 -pipe -fno-strict-aliasing"
@@ -77,3 +83,5 @@ src_install() {
 #		fi
 #	done
 }
+
+KEEP_LA_FILES="none"
